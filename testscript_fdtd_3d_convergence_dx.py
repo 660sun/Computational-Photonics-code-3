@@ -1,4 +1,4 @@
-'''Test script for Homework 3, Computational Photonics, SS 2024:  FDTD 3D method.
+'''Test script for Homework 3, Computational Photonics, SS 2024:  FDTD 3D convergence dx.
 '''
 
 

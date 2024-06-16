@@ -1,8 +1,9 @@
-'''Test script for Homework 3, Computational Photonics, SS 2024:  FDTD 1D method.
+'''Test script for Homework 3, Computational Photonics, SS 2024:  FDTD 1D convergence dx.
 '''
 
 
 import numpy as np
+import time
 from function_headers_fdtd import fdtd_1d, Fdtd1DAnimation
 from matplotlib import pyplot as plt
 

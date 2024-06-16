@@ -41,7 +41,9 @@ def fdtd_1d(eps_rel, dx, time_span, source_frequency, source_position,
         t  : 1d-array
             Time of the field output
     '''
-    pass
+    
+    
+    return Ez, Hy, x, t
 
 
 def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
@@ -82,7 +84,9 @@ def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
         t: 1d-array
             Time of the field output.
     '''
-    pass
+    
+    
+    return F, t
 
 
 class Fdtd1DAnimation(animation.TimedAnimation):
