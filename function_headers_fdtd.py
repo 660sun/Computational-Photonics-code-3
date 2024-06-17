@@ -7,8 +7,7 @@ from matplotlib import animation
 import time
 
 
-def fdtd_1d(eps_rel, dx, time_span, source_frequency, source_position,
-            source_pulse_length):
+def fdtd_1d(eps_rel, dx, time_span, source_frequency, source_position, source_pulse_length):
     '''Computes the temporal evolution of a pulsed excitation using the
     1D FDTD method. The temporal center of the pulse is placed at a
     simulation time of 3*source_pulse_length. The origin x=0 is in the
@@ -42,6 +41,36 @@ def fdtd_1d(eps_rel, dx, time_span, source_frequency, source_position,
             Time of the field output
     '''
     
+    # basic parameters
+    c = 2.99792458e8 # speed of light [m/s]
+    mu0 = 4*np.pi*1e-7 # vacuum permeability [Vs/(Am)]
+    eps0 = 1/(mu0*c**2) # vacuum permittivity [As/(Vm)]
+    Z0 = np.sqrt(mu0/eps0) # vacuum impedance [Ohm]
+
+    # time step
+    dt = dx / (2 * c)
+    Nt = int(round(time_span / dt)) + 1
+    t = np.linspace(0, time_span, Nt)
+
+    # construction of matrices
+    Ez = np.zeros((Nt, len(eps_rel)))
+    Hy = np.zeros((Nt, len(eps_rel)))
+    jz = np.zeros((Nt, len(eps_rel) - 1))
+
+    # spatial coordinates of the fields
+    x = np.linspace(-(len(eps_rel) - 1)/2*dx, (len(eps_rel) - 1)/2*dx, len(eps_rel))
+
+    # source matrix
+    for n in range(Nt):
+        jz[n, source_position] = np.exp(-(((n + 0.5)*dt - 3*source_pulse_length)/source_pulse_length)**2) * np.cos(2*np.pi*source_frequency*(n + 0.5)*dt)
+    
+    # main loop
+    for n in range(1, Nt):
+        for i in range(1, len(eps_rel) - 1):
+            Ez[n, i] = Ez[n-1, i] + (Hy[n-1, i-1] - Hy[n-1, i]) * 1 / ( eps0 * eps_rel[i] ) * dt / dx - jz[n, i] * dt / ( eps0 * eps_rel[i] )
+        for i in range(len(eps_rel) - 1):
+            Hy[n, i] = Hy[n-1, i] + (Ez[n, i] - Ez[n, i+1]) * 1 / mu0 * dt / dx
+
     
     return Ez, Hy, x, t
 

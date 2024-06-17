@@ -49,19 +49,25 @@ source_pulse_length = 1e-15 # [s]
 
 # please add your code here
 x = np.linspace(-x_span/2, x_span/2, Nx)
+
 eps_rel = np.ones(Nx)
 for i in range(Nx):
     if x[i] > x_interface:
         eps_rel[i] = n2**2
     else:
         eps_rel[i] = n1**2
-fdtd_1d(eps_rel, dx, time_span, source_frequency, source_position, source_pulse_length)
+
+for i, xi in enumerate(x):
+    if abs(xi - source_position) < dx/2:
+        source_position = i
+
+Ez, Hy, x, t = fdtd_1d(eps_rel, dx, time_span, source_frequency, source_position, source_pulse_length)
 
 # %% make video %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fps = 25
 step = t[-1]/fps/30
-ani = Fdtd1DAnimation(x, t, Ez, Hy, x_interface=x_interface,
-                       step=step, fps=fps)
+ani = Fdtd1DAnimation(x, t, Ez, Hy, x_interface=x_interface, step=step, fps=fps)
+ani.save('fdtd_1d_animation.mp4', writer='ffmpeg', dpi=300)
 plt.show()
 
 # %% create representative figures of the results %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
