@@ -44,7 +44,7 @@ y = np.arange(-int(np.ceil((Ny-1)/2)), int(np.floor((Ny-1)/2)) + 1)*dr
 # source parameters
 freq = 500e12 # pulse [Hz]
 tau = 1e-15 # pulse width [s]
-source_width = 2 # width of Gaussian current dist. [grid points]
+source_width = 2*dr # width of Gaussian current dist. [grid points]
 
 # grid midpoints
 midx = int(np.ceil((Nx-1)/2))
@@ -56,7 +56,7 @@ midz = int(np.ceil((Nz-1)/2))
 
 # eps_rel = ...
 
-eps_rel = np.ones((Nx, Ny, Nz))
+eps_rel = np.ones((Nx, Ny, Nz)) 
 
 # %% current distributions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # jx = jy = np.zeros(...) 
@@ -73,6 +73,14 @@ jz = np.zeros((Nx, Ny, Nz))
 for i, xi in enumerate(x):
     for j, yj in enumerate(y):
         jz[i, j, :] = np.exp(-((xi)**2 + (yj)**2)/(source_width**2))
+
+# plt.figure()
+# plt.imshow(jz[:, :, midz].T, origin='lower', extent=[x[0], x[-1], y[0], y[-1]])
+# plt.colorbar(label='Current density $J_z$')
+# plt.xlabel('x [m]')
+# plt.ylabel('y [m]')
+# plt.title('Current density distribution in the xy-plane')
+# plt.show()
 
 # output parameters
 z_ind = midz # z-index of field output
@@ -119,6 +127,7 @@ rel_color_range = 1/3
 fps = 10
 
 ani = Fdtd3DAnimation(x, y, t, F1, titlestr, cb_label, rel_color_range, fps)
+ani.save('fdtd_3d_hx_animation.mp4', writer='ffmpeg', dpi=300)
 plt.show()
 
 #%% movie of Ez %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -129,6 +138,7 @@ rel_color_range = 1/3
 fps = 10
 
 ani = Fdtd3DAnimation(x, y, t, F2, titlestr, cb_label, rel_color_range, fps)
+ani.save('fdtd_3d_ez_animation.mp4', writer='ffmpeg', dpi=300)
 plt.show()
 
 # %% create representative figures of the results %%%%%%%%%%%%%%%%%%%%%%%%%%%%%

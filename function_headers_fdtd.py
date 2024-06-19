@@ -74,6 +74,7 @@ def fdtd_1d(eps_rel, dx, time_span, source_frequency, source_position, source_pu
     # postprocessing - interpolation of output
     for i in range(1, len(eps_rel)-1):
         Hy[:, i] = 0.5 * (Hy[:, i] + Hy[:, i-1])
+    Hy[:, -1] = Hy[:, -2]
 
     return Ez, Hy, x, t
 
@@ -123,12 +124,6 @@ def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
     t = np.linspace(0, time_span, Nt)
 
     # construction of matrices
-    # ex = np.zeros((len(eps_rel[0]) - 1, len(eps_rel[1]), len(eps_rel[2]), len(t)))
-    # ey = np.zeros((len(eps_rel[0]), len(eps_rel[1]) - 1, len(eps_rel[2]), len(t)))
-    # ez = np.zeros((len(eps_rel[0]), len(eps_rel[1]), len(eps_rel[2]) - 1, len(t)))
-    # hx = np.zeros((len(eps_rel[0]), len(eps_rel[1]) - 1, len(eps_rel[2]) - 1, len(t)))
-    # hy = np.zeros((len(eps_rel[0]) - 1, len(eps_rel[1]), len(eps_rel[2]) - 1, len(t)))
-    # hz = np.zeros((len(eps_rel[0]) - 1, len(eps_rel[1]) - 1, len(eps_rel[2]), len(t)))
     ex = np.zeros((eps_rel.shape[0], eps_rel.shape[1], eps_rel.shape[2], len(t)))
     ey = np.zeros((eps_rel.shape[0], eps_rel.shape[1], eps_rel.shape[2], len(t)))
     ez = np.zeros((eps_rel.shape[0], eps_rel.shape[1], eps_rel.shape[2], len(t)))
@@ -165,6 +160,34 @@ def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
                 for k in range(1, eps_rel.shape[2] - 1):
                     hz[i, j, k, n] = hz[i, j, k, n-1] + ((ex[i, j+1, k, n] - ex[i, j, k, n]) - (ey[i+1, j, k, n] - ey[i, j, k, n])) * 1 / mu0 * dt / dr
 
+    # for n in range(1, Nt):
+    #     #  boundary conditions
+    #     ex[:, 0, :, :] = ex[:, -1, :, :] = ex[:, :, 0, :] = ex[:, :, -1, :] = 0
+    #     ey[0, :, :, :] = ey[-1, :, :, :] = ey[:, :, 0, :] = ey[:, :, -1, :] = 0
+    #     ez[0, :, :, :] = ez[-1, :, :, :] = ez[:, 0, :, :] = ez[:, -1, :, :] = 0
+    #     hx[0, :, :, :] = hx[-1, :, :, :] = 0
+    #     hy[:, 0, :, :] = hy[:, -1, :, :] = 0
+    #     hz[:, :, 0, :] = hz[:, :, -1, :] = 0
+    #     # update electric fields
+    #     for i in range(1, eps_rel.shape[0] ):
+    #         for j in range(1, eps_rel.shape[1] ):
+    #             for k in range(1, eps_rel.shape[2]):
+    #                 ex[i, j, k, n] = ex[i, j, k, n-1] + (((hz[i, j, k, n-1] - hz[i, j-1, k, n-1])) - (hy[i, j, k, n-1] - hy[i, j, k-1, n-1])) * 1 / ( eps0 * eps_rel[i, j, k] ) * dt / dr - jx[i, j, k] * np.cos(2 * np.pi * freq * (n - 0.5) * dt) * np.exp( - (((n - 0.5)* dt - 3 * tau) /(tau))**2) * dt / ( eps0 * eps_rel[i, j, k] )
+
+    #                 ey[i, j, k, n] = ey[i, j, k, n-1] + ((hx[i, j, k, n-1] - hx[i, j, k-1, n-1]) - (hz[i, j, k, n-1] - hz[i-1, j, k, n-1])) * 1 / ( eps0 * eps_rel[i, j, k] ) * dt / dr - jy[i, j, k] * np.cos(2 * np.pi * freq * (n - 0.5) * dt) * np.exp( - (((n - 0.5)* dt - 3 * tau) /(tau))**2) * dt / ( eps0 * eps_rel[i, j, k] )
+
+    #                 ez[i, j, k, n] = ez[i, j, k, n-1] + ((hy[i, j, k, n-1] - hy[i-1, j, k, n-1]) - (hx[i, j, k, n-1] - hy[i, j-1, k, n-1])) * 1 / ( eps0 * eps_rel[i, j, k] ) * dt / dr - jz[i, j, k] * np.cos(2 * np.pi * freq * (n - 0.5) * dt) * np.exp( - (((n - 0.5)* dt - 3 * tau) /(tau))**2) * dt / ( eps0 * eps_rel[i, j, k] )
+    #     # update magnetic fields
+    #     for i in range(eps_rel.shape[0]-1 ):
+    #         for j in range(eps_rel.shape[1]-1 ):
+    #             for k in range(eps_rel.shape[2]-1 ):
+    #                 hx[i, j, k, n] = hx[i, j, k, n-1] + ((ey[i, j, k+1, n] - ey[i, j, k, n]) - (ez[i, j+1, k, n] - ez[i, j, k, n])) * 1 / mu0 * dt / dr
+
+    #                 hy[i, j, k, n] = hy[i, j, k, n-1] + ((ez[i+1, j, k, n] - ez[i, j, k, n]) - (ex[i, j, k+1, n] - ex[i, j, k, n])) * 1 / mu0 * dt / dr
+
+    #                 hz[i, j, k, n] = hz[i, j, k, n-1] + ((ex[i, j+1, k, n] - ex[i, j, k, n]) - (ey[i+1, j, k, n] - ey[i, j, k, n])) * 1 / mu0 * dt / dr
+
+
     # postprocessing - interpolation of output
     for i in range(1, ex.shape[0]-1):
         ex[i, :, :, :] = 0.5 * (ex[i, :, :, :] + ex[i-1, :, :, :])
@@ -195,15 +218,21 @@ def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
 
     # return F, t
 
-    F1 = np.zeros((hx.shape[0], hx.shape[1], len(t)))
-    for n in range(len(t)):
-        F1[:,:,n] = hx[:,:, z_ind , n]
-    F1 = F1[:, :, ::output_step]
+    if field_component == 'hx' or 'ez':
 
-    F2 = np.zeros((ez.shape[0], ez.shape[1], len(t)))
-    for n in range(len(t)):
-        F2[:,:,n] = ez[:,:, z_ind , n]  
-    F2 = F2[:, :, ::output_step]
+        F1 = np.zeros((hx.shape[0], hx.shape[1], len(t)))
+        for n in range(len(t)):
+            F1[:,:,n] = hx[:,:, z_ind , n]
+        F1 = F1[:, :, ::output_step]
+        F1 = np.transpose(F1, (2, 0, 1))
+
+        F2 = np.zeros((ez.shape[0], ez.shape[1], len(t)))
+        for n in range(len(t)):
+            F2[:,:,n] = ez[:,:, z_ind , n]  
+        F2 = F2[:, :, ::output_step]
+        F2 = np.transpose(F2, (2, 0, 1))
+
+    t = t[::output_step]
 
     return F1, F2, t
 
@@ -305,8 +334,7 @@ class Fdtd3DAnimation(animation.TimedAnimation):
     t : 1d-array
         Time
     field: 3d-array
-        Slices of the field to animate (the time axis is assumed to be be
-        the first axis of the array)
+        Slices of the field to animate (the time axis is assumed to be be the first axis of the array)
     titlestr : str
         Plot title.
     cb_label : str
@@ -370,8 +398,7 @@ class Timer(object):
         self._tic = time.time()
 
     def toc(self):
-        '''Returns the time in seconds that has elapsed since the last call
-        to tic().
+        '''Returns the time in seconds that has elapsed since the last call to tic().
         '''
         return time.time() - self._tic
 
