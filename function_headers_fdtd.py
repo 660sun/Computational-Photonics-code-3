@@ -71,7 +71,10 @@ def fdtd_1d(eps_rel, dx, time_span, source_frequency, source_position, source_pu
         for i in range(len(eps_rel) - 1):
             Hy[n, i] = Hy[n-1, i] + (Ez[n, i+1] - Ez[n, i]) * 1 / mu0 * dt / dx
 
-    
+    # postprocessing - interpolation of output
+    for i in range(1, len(eps_rel)-1):
+        Hy[:, i] = 0.5 * (Hy[:, i] + Hy[:, i-1])
+
     return Ez, Hy, x, t
 
 
