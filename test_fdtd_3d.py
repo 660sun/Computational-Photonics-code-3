@@ -56,6 +56,8 @@ midz = int(np.ceil((Nz-1)/2))
 
 # eps_rel = ...
 
+eps_rel = np.ones((Nx, Ny, Nz))
+
 # %% current distributions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # jx = jy = np.zeros(...) 
 # jz : Gaussion distribution in the xy-plane with a width of 2 grid points, 
@@ -65,33 +67,68 @@ midz = int(np.ceil((Nz-1)/2))
 # jy = ...
 # jz = ...
 
+jx = np.zeros((Nx, Ny, Nz))
+jy = np.zeros((Nx, Ny, Nz))
+jz = np.zeros((Nx, Ny, Nz))
+for i, xi in enumerate(x):
+    for j, yj in enumerate(y):
+        jz[i, j, :] = np.exp(-((xi)**2 + (yj)**2)/(source_width**2))
+
 # output parameters
 z_ind = midz # z-index of field output
 output_step = 4 # time steps between field output
 
+field_component = 'hx'
+hx, ez, t = fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz, field_component, z_ind, output_step)
+
 #%% run simulations %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 # please add your code here
-fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz, field_component, z_ind, output_step) 
+# field_component = str(input('Enter the field component you want to plot (hx, ez): '))
+# if field_component == 'hx':
+#     hx, t = fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz, field_component, z_ind, output_step)
+#     F1 = hx*Z0*1e6
+#     titlestr = 'x-Component of Magnetic Field'
+#     cb_label = '$\\Re\\{Z_0H_x\\}$ [µV/m]'
+#     rel_color_range = 1/3
+#     fps = 10
+
+#     ani = Fdtd3DAnimation(x, y, t, F1, titlestr, cb_label, rel_color_range, fps)
+#     ani.save('fdtd_3d_hx_animation.mp4', writer='ffmpeg', dpi=300)
+#     plt.show()
+# elif field_component == 'ez':
+#     ez, t = fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz, field_component, z_ind, output_step)
+#     F2 = ez*1e6
+#     titlestr = 'z-Component of Electric Field'
+#     cb_label = '$\\Re\\{E_z\\}$ [µV/m]'
+#     rel_color_range = 1/3
+#     fps = 10
+
+#     ani = Fdtd3DAnimation(x, y, t, F2, titlestr, cb_label, rel_color_range, fps)
+#     ani.save('fdtd_3d_ez_animation.mp4', writer='ffmpeg', dpi=300)
+#     plt.show()
+# else:
+#     print('Invalid field component. Please enter either hx or ez.')
+
 
 #%% movie of Hx %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-F = Hx*Z0*1e6
+F1 = hx*Z0*1e6
 titlestr = 'x-Component of Magnetic Field'
 cb_label = '$\\Re\\{Z_0H_x\\}$ [µV/m]'
 rel_color_range = 1/3
 fps = 10
 
-ani = Fdtd3DAnimation(x, y, t, F, titlestr, cb_label, rel_color_range, fps)
+ani = Fdtd3DAnimation(x, y, t, F1, titlestr, cb_label, rel_color_range, fps)
 plt.show()
 
 #%% movie of Ez %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-F = Ez*1e6
+F2 = ez*1e6
 titlestr = 'z-Component of Electric Field'
 cb_label = '$\\Re\\{E_z\\}$ [µV/m]'
 rel_color_range = 1/3
 fps = 10
 
-ani = Fdtd3DAnimation(x, y, t, F, titlestr, cb_label, rel_color_range, fps)
+ani = Fdtd3DAnimation(x, y, t, F2, titlestr, cb_label, rel_color_range, fps)
 plt.show()
 
 # %% create representative figures of the results %%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -62,14 +62,14 @@ def fdtd_1d(eps_rel, dx, time_span, source_frequency, source_position, source_pu
 
     # source matrix
     for n in range(Nt):
-        jz[n, source_position] = np.exp(-(((n + 0.5)*dt - 3*source_pulse_length)/source_pulse_length)**2) * np.cos(2*np.pi*source_frequency*(n + 0.5)*dt)
+        jz[n, source_position] = np.exp(-(((n + 0.5)*dt - 3*source_pulse_length)/source_pulse_length)**2) * np.cos(2*np.pi*source_frequency * (n + 0.5)*dt)
     
     # main loop
     for n in range(1, Nt):
         for i in range(1, len(eps_rel) - 1):
-            Ez[n, i] = Ez[n-1, i] + (Hy[n-1, i-1] - Hy[n-1, i]) * 1 / ( eps0 * eps_rel[i] ) * dt / dx - jz[n, i] * dt / ( eps0 * eps_rel[i] )
+            Ez[n, i] = Ez[n-1, i] + (Hy[n-1, i] - Hy[n-1, i-1]) * 1 / ( eps0 * eps_rel[i] ) * dt / dx - jz[n-1, i] * dt / ( eps0 * eps_rel[i] )
         for i in range(len(eps_rel) - 1):
-            Hy[n, i] = Hy[n-1, i] + (Ez[n, i] - Ez[n, i+1]) * 1 / mu0 * dt / dx
+            Hy[n, i] = Hy[n-1, i] + (Ez[n, i+1] - Ez[n, i]) * 1 / mu0 * dt / dx
 
     
     return Ez, Hy, x, t
@@ -77,11 +77,7 @@ def fdtd_1d(eps_rel, dx, time_span, source_frequency, source_position, source_pu
 
 def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
             field_component, z_ind, output_step):
-    '''Computes the temporal evolution of a pulsed spatially extended current
-    source using the 3D FDTD method. Returns z-slices of the selected
-    field at the given z-position every output_step time steps. The pulse
-    is centered at a simulation time of 3*tau. All quantities have to be
-    specified in SI units.
+    '''Computes the temporal evolution of a pulsed spatially extended current source using the 3D FDTD method. Returns z-slices of the selected field at the given z-position every output_step time steps. The pulse is centered at a simulation time of 3*tau. All quantities have to be specified in SI units.
 
     Arguments
     ---------
@@ -107,15 +103,106 @@ def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
     Returns
     -------
         F: 3d-array
-            Z-slices of the selected field component at the
-            z-position specified by z_ind stored every output_step
-            time steps (time varies along the first axis).
+            Z-slices of the selected field component at the z-position specified by z_ind stored every output_step         time steps (time varies along the first axis).
         t: 1d-array
             Time of the field output.
     '''
     
+    # basic parameters
+    c = 2.99792458e8 # speed of light [m/s]
+    mu0 = 4*np.pi*1e-7 # vacuum permeability [Vs/(Am)]
+    eps0 = 1/(mu0*c**2) # vacuum permittivity [As/(Vm)]
+    Z0 = np.sqrt(mu0/eps0) # vacuum impedance [Ohm]
+
+    # time step
+    dt = dr / (2 * c)
+    Nt = int(round(time_span / dt)) + 1
+    t = np.linspace(0, time_span, Nt)
+
+    # construction of matrices
+    # ex = np.zeros((len(eps_rel[0]) - 1, len(eps_rel[1]), len(eps_rel[2]), len(t)))
+    # ey = np.zeros((len(eps_rel[0]), len(eps_rel[1]) - 1, len(eps_rel[2]), len(t)))
+    # ez = np.zeros((len(eps_rel[0]), len(eps_rel[1]), len(eps_rel[2]) - 1, len(t)))
+    # hx = np.zeros((len(eps_rel[0]), len(eps_rel[1]) - 1, len(eps_rel[2]) - 1, len(t)))
+    # hy = np.zeros((len(eps_rel[0]) - 1, len(eps_rel[1]), len(eps_rel[2]) - 1, len(t)))
+    # hz = np.zeros((len(eps_rel[0]) - 1, len(eps_rel[1]) - 1, len(eps_rel[2]), len(t)))
+    ex = np.zeros((eps_rel.shape[0], eps_rel.shape[1], eps_rel.shape[2], len(t)))
+    ey = np.zeros((eps_rel.shape[0], eps_rel.shape[1], eps_rel.shape[2], len(t)))
+    ez = np.zeros((eps_rel.shape[0], eps_rel.shape[1], eps_rel.shape[2], len(t)))
+    hx = np.zeros((eps_rel.shape[0], eps_rel.shape[1], eps_rel.shape[2], len(t)))
+    hy = np.zeros((eps_rel.shape[0], eps_rel.shape[1], eps_rel.shape[2], len(t)))
+    hz = np.zeros((eps_rel.shape[0], eps_rel.shape[1], eps_rel.shape[2], len(t)))
+
+    # main loop
+    for n in range(1, Nt):
+        # update electric fields
+        for i in range(0, eps_rel.shape[0] - 1):
+            for j in range(1, eps_rel.shape[1] - 1):
+                for k in range(1, eps_rel.shape[2] - 1):
+                    ex[i, j, k, n] = ex[i, j, k, n-1] + (((hz[i, j, k, n-1] - hz[i, j-1, k, n-1])) - (hy[i, j, k, n-1] - hy[i, j, k-1, n-1])) * 1 / ( eps0 * eps_rel[i, j, k] ) * dt / dr - jx[i, j, k] * np.cos(2 * np.pi * freq * (n - 0.5) * dt) * np.exp( - (((n - 0.5)* dt - 3 * tau) /(tau))**2) * dt / ( eps0 * eps_rel[i, j, k] )
+        for i in range(1, eps_rel.shape[0] - 1):
+            for j in range(0, eps_rel.shape[1] - 1):
+                for k in range(1, eps_rel.shape[2] - 1):
+                    ey[i, j, k, n] = ey[i, j, k, n-1] + ((hx[i, j, k, n-1] - hx[i, j, k-1, n-1]) - (hz[i, j, k, n-1] - hz[i-1, j, k, n-1])) * 1 / ( eps0 * eps_rel[i, j, k] ) * dt / dr - jy[i, j, k] * np.cos(2 * np.pi * freq * (n - 0.5) * dt) * np.exp( - (((n - 0.5)* dt - 3 * tau) /(tau))**2) * dt / ( eps0 * eps_rel[i, j, k] )
+        for i in range(1, eps_rel.shape[0] - 1):
+            for j in range(1, eps_rel.shape[1] - 1):
+                for k in range(0, eps_rel.shape[2] - 1):
+                    ez[i, j, k, n] = ez[i, j, k, n-1] + ((hy[i, j, k, n-1] - hy[i-1, j, k, n-1]) - (hx[i, j, k, n-1] - hy[i, j-1, k, n-1])) * 1 / ( eps0 * eps_rel[i, j, k] ) * dt / dr - jz[i, j, k] * np.cos(2 * np.pi * freq * (n - 0.5) * dt) * np.exp( - (((n - 0.5)* dt - 3 * tau) /(tau))**2) * dt / ( eps0 * eps_rel[i, j, k] )
+        # update magnetic fields
+        for i in range(1, eps_rel.shape[0] - 1):
+            for j in range(0, eps_rel.shape[1] - 1):
+                for k in range(0, eps_rel.shape[2] - 1):
+                    hx[i, j, k, n] = hx[i, j, k, n-1] + ((ey[i, j, k+1, n] - ey[i, j, k, n]) - (ez[i, j+1, k, n] - ez[i, j, k, n])) * 1 / mu0 * dt / dr
+        for i in range(0, eps_rel.shape[0] - 1):
+            for j in range(1, eps_rel.shape[1] - 1):
+                for k in range(0, eps_rel.shape[2] - 1):
+                    hy[i, j, k, n] = hy[i, j, k, n-1] + ((ez[i+1, j, k, n] - ez[i, j, k, n]) - (ex[i, j, k+1, n] - ex[i, j, k, n])) * 1 / mu0 * dt / dr
+        for i in range(0, eps_rel.shape[0] - 1):
+            for j in range(0, eps_rel.shape[1] - 1):
+                for k in range(1, eps_rel.shape[2] - 1):
+                    hz[i, j, k, n] = hz[i, j, k, n-1] + ((ex[i, j+1, k, n] - ex[i, j, k, n]) - (ey[i+1, j, k, n] - ey[i, j, k, n])) * 1 / mu0 * dt / dr
+
+    # postprocessing - interpolation of output
+    for i in range(1, ex.shape[0]-1):
+        ex[i, :, :, :] = 0.5 * (ex[i, :, :, :] + ex[i-1, :, :, :])
+    for j in range(1, ey.shape[1]-1):
+        ey[:, j, :, :] = 0.5 * (ey[:, j, :, :] + ey[:, j-1, :, :])
+    for k in range(1, ez.shape[2]-1):
+        ez[:, :, k, :] = 0.5 * (ez[:, :, k, :] + ez[:, :, k-1, :])
+    for n in range(1, hx.shape[3]):
+        for i in range(1, hx.shape[0]):
+            for j in range(1, hx.shape[1]):
+                for k in range(1, hx.shape[2]):
+                    hx[i, j, k, n] = 0.125 * (hx[i, j-1, k-1, n-1] + hx[i, j-1, k, n-1] + hx[i, j, k-1, n-1] + hx[i, j, k, n-1] + hx[i, j-1, k-1, n] + hx[i, j-1, k, n] + hx[i, j, k-1, n] + hx[i, j, k, n])
+                    hy[i, j, k, n] = 0.125 * (hy[i-1, j, k-1, n-1] + hy[i-1, j, k, n-1] + hy[i, j, k-1, n-1] + hy[i, j, k, n-1] + hy[i-1, j, k-1, n] + hy[i-1, j, k, n] + hy[i, j, k-1, n] + hy[i, j, k, n])
+                    hz[i, j, k, n] = 0.125 * (hz[i-1, j-1, k, n-1] + hz[i-1, j, k, n-1] + hz[i, j-1, k, n-1] + hz[i, j, k, n-1] + hz[i-1, j-1, k, n] + hz[i-1, j, k, n] + hz[i, j-1, k, n] + hz[i, j, k, n])
+
     
-    return F, t
+    # if field_component == 'hx':
+    #     F = np.zeros((hx.shape[0], hx.shape[1], len(t)))
+    #     for n in range(len(t)):
+    #         F[:,:,n] = hx[:,:, z_ind , n]
+    
+    # if field_component == 'ez':
+    #     F = np.zeros((ez.shape[0], ez.shape[1], len(t)))
+    #     for n in range(len(t)):
+    #         F[:,:,n] = ez[:,:, z_ind , n]
+
+    # F = F[:, :, ::output_step]
+
+    # return F, t
+
+    F1 = np.zeros((hx.shape[0], hx.shape[1], len(t)))
+    for n in range(len(t)):
+        F1[:,:,n] = hx[:,:, z_ind , n]
+    F1 = F1[:, :, ::output_step]
+
+    F2 = np.zeros((ez.shape[0], ez.shape[1], len(t)))
+    for n in range(len(t)):
+        F2[:,:,n] = ez[:,:, z_ind , n]  
+    F2 = F2[:, :, ::output_step]
+
+    return F1, F2, t
 
 
 class Fdtd1DAnimation(animation.TimedAnimation):
