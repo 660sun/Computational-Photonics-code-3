@@ -74,14 +74,6 @@ for i, xi in enumerate(x):
     for j, yj in enumerate(y):
         jz[i, j, :] = np.exp(-((xi)**2 + (yj)**2)/(source_width**2))
 
-# plt.figure()
-# plt.imshow(jz[:, :, midz].T, origin='lower', extent=[x[0], x[-1], y[0], y[-1]])
-# plt.colorbar(label='Current density $J_z$')
-# plt.xlabel('x [m]')
-# plt.ylabel('y [m]')
-# plt.title('Current density distribution in the xy-plane')
-# plt.show()
-
 # output parameters
 z_ind = midz # z-index of field output
 output_step = 4 # time steps between field output
