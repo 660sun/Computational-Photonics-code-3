@@ -72,9 +72,11 @@ def fdtd_1d(eps_rel, dx, time_span, source_frequency, source_position, source_pu
             Hy[n, i] = Hy[n-1, i] + (Ez[n, i+1] - Ez[n, i]) * 1 / mu0 * dt / dx
 
     # postprocessing - interpolation of output
-    for i in range(1, len(eps_rel)-1):
-        Hy[:, i] = 0.5 * (Hy[:, i] + Hy[:, i-1])
-    Hy[:, -1] = Hy[:, -2]
+    for n in range(1, len(Ez)):
+        Hy[n, 0] = 0.5 * (Hy[n, 0] + Hy[n-1, 0])
+        Hy[n, -1] = 0.5 * (Hy[n, -2] + Hy[n-1, -2])
+        for i in range(1, len(eps_rel)-1):
+            Hy[n, i] = 0.25 * (Hy[n, i] + Hy[n, i-1] + Hy[n-1, i] + Hy[n-1, i-1])
 
     return Ez, Hy, x, t
 
@@ -160,48 +162,21 @@ def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
                 for k in range(1, eps_rel.shape[2] - 1):
                     hz[i, j, k, n] = hz[i, j, k, n-1] + ((ex[i, j+1, k, n] - ex[i, j, k, n]) - (ey[i+1, j, k, n] - ey[i, j, k, n])) * 1 / mu0 * dt / dr
 
-    # for n in range(1, Nt):
-    #     #  boundary conditions
-    #     ex[:, 0, :, :] = ex[:, -1, :, :] = ex[:, :, 0, :] = ex[:, :, -1, :] = 0
-    #     ey[0, :, :, :] = ey[-1, :, :, :] = ey[:, :, 0, :] = ey[:, :, -1, :] = 0
-    #     ez[0, :, :, :] = ez[-1, :, :, :] = ez[:, 0, :, :] = ez[:, -1, :, :] = 0
-    #     hx[0, :, :, :] = hx[-1, :, :, :] = 0
-    #     hy[:, 0, :, :] = hy[:, -1, :, :] = 0
-    #     hz[:, :, 0, :] = hz[:, :, -1, :] = 0
-    #     # update electric fields
-    #     for i in range(1, eps_rel.shape[0] ):
-    #         for j in range(1, eps_rel.shape[1] ):
-    #             for k in range(1, eps_rel.shape[2]):
-    #                 ex[i, j, k, n] = ex[i, j, k, n-1] + (((hz[i, j, k, n-1] - hz[i, j-1, k, n-1])) - (hy[i, j, k, n-1] - hy[i, j, k-1, n-1])) * 1 / ( eps0 * eps_rel[i, j, k] ) * dt / dr - jx[i, j, k] * np.cos(2 * np.pi * freq * (n - 0.5) * dt) * np.exp( - (((n - 0.5)* dt - 3 * tau) /(tau))**2) * dt / ( eps0 * eps_rel[i, j, k] )
-
-    #                 ey[i, j, k, n] = ey[i, j, k, n-1] + ((hx[i, j, k, n-1] - hx[i, j, k-1, n-1]) - (hz[i, j, k, n-1] - hz[i-1, j, k, n-1])) * 1 / ( eps0 * eps_rel[i, j, k] ) * dt / dr - jy[i, j, k] * np.cos(2 * np.pi * freq * (n - 0.5) * dt) * np.exp( - (((n - 0.5)* dt - 3 * tau) /(tau))**2) * dt / ( eps0 * eps_rel[i, j, k] )
-
-    #                 ez[i, j, k, n] = ez[i, j, k, n-1] + ((hy[i, j, k, n-1] - hy[i-1, j, k, n-1]) - (hx[i, j, k, n-1] - hy[i, j-1, k, n-1])) * 1 / ( eps0 * eps_rel[i, j, k] ) * dt / dr - jz[i, j, k] * np.cos(2 * np.pi * freq * (n - 0.5) * dt) * np.exp( - (((n - 0.5)* dt - 3 * tau) /(tau))**2) * dt / ( eps0 * eps_rel[i, j, k] )
-    #     # update magnetic fields
-    #     for i in range(eps_rel.shape[0]-1 ):
-    #         for j in range(eps_rel.shape[1]-1 ):
-    #             for k in range(eps_rel.shape[2]-1 ):
-    #                 hx[i, j, k, n] = hx[i, j, k, n-1] + ((ey[i, j, k+1, n] - ey[i, j, k, n]) - (ez[i, j+1, k, n] - ez[i, j, k, n])) * 1 / mu0 * dt / dr
-
-    #                 hy[i, j, k, n] = hy[i, j, k, n-1] + ((ez[i+1, j, k, n] - ez[i, j, k, n]) - (ex[i, j, k+1, n] - ex[i, j, k, n])) * 1 / mu0 * dt / dr
-
-    #                 hz[i, j, k, n] = hz[i, j, k, n-1] + ((ex[i, j+1, k, n] - ex[i, j, k, n]) - (ey[i+1, j, k, n] - ey[i, j, k, n])) * 1 / mu0 * dt / dr
-
 
     # postprocessing - interpolation of output
-    for i in range(1, ex.shape[0]-1):
-        ex[i, :, :, :] = 0.5 * (ex[i, :, :, :] + ex[i-1, :, :, :])
-    for j in range(1, ey.shape[1]-1):
-        ey[:, j, :, :] = 0.5 * (ey[:, j, :, :] + ey[:, j-1, :, :])
-    for k in range(1, ez.shape[2]-1):
-        ez[:, :, k, :] = 0.5 * (ez[:, :, k, :] + ez[:, :, k-1, :])
-    for n in range(1, hx.shape[3]):
-        for i in range(1, hx.shape[0]):
-            for j in range(1, hx.shape[1]):
-                for k in range(1, hx.shape[2]):
-                    hx[i, j, k, n] = 0.125 * (hx[i, j-1, k-1, n-1] + hx[i, j-1, k, n-1] + hx[i, j, k-1, n-1] + hx[i, j, k, n-1] + hx[i, j-1, k-1, n] + hx[i, j-1, k, n] + hx[i, j, k-1, n] + hx[i, j, k, n])
-                    hy[i, j, k, n] = 0.125 * (hy[i-1, j, k-1, n-1] + hy[i-1, j, k, n-1] + hy[i, j, k-1, n-1] + hy[i, j, k, n-1] + hy[i-1, j, k-1, n] + hy[i-1, j, k, n] + hy[i, j, k-1, n] + hy[i, j, k, n])
-                    hz[i, j, k, n] = 0.125 * (hz[i-1, j-1, k, n-1] + hz[i-1, j, k, n-1] + hz[i, j-1, k, n-1] + hz[i, j, k, n-1] + hz[i-1, j-1, k, n] + hz[i-1, j, k, n] + hz[i, j-1, k, n] + hz[i, j, k, n])
+    # for i in range(1, ex.shape[0]-1):
+    #     ex[i, :, :, :] = 0.5 * (ex[i, :, :, :] + ex[i-1, :, :, :])
+    # for j in range(1, ey.shape[1]-1):
+    #     ey[:, j, :, :] = 0.5 * (ey[:, j, :, :] + ey[:, j-1, :, :])
+    # for k in range(1, ez.shape[2]-1):
+    #     ez[:, :, k, :] = 0.5 * (ez[:, :, k, :] + ez[:, :, k-1, :])
+    # for n in range(1, hx.shape[3]):
+    #     for i in range(1, hx.shape[0]):
+    #         for j in range(1, hx.shape[1]):
+    #             for k in range(1, hx.shape[2]):
+    #                 hx[i, j, k, n] = 0.125 * (hx[i, j-1, k-1, n-1] + hx[i, j-1, k, n-1] + hx[i, j, k-1, n-1] + hx[i, j, k, n-1] + hx[i, j-1, k-1, n] + hx[i, j-1, k, n] + hx[i, j, k-1, n] + hx[i, j, k, n])
+    #                 hy[i, j, k, n] = 0.125 * (hy[i-1, j, k-1, n-1] + hy[i-1, j, k, n-1] + hy[i, j, k-1, n-1] + hy[i, j, k, n-1] + hy[i-1, j, k-1, n] + hy[i-1, j, k, n] + hy[i, j, k-1, n] + hy[i, j, k, n])
+    #                 hz[i, j, k, n] = 0.125 * (hz[i-1, j-1, k, n-1] + hz[i-1, j, k, n-1] + hz[i, j-1, k, n-1] + hz[i, j, k, n-1] + hz[i-1, j-1, k, n] + hz[i-1, j, k, n] + hz[i, j-1, k, n] + hz[i, j, k, n])
 
     
     # if field_component == 'hx':
