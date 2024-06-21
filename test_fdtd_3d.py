@@ -114,7 +114,7 @@ hx, ez, t = fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz, field_compone
 #%% movie of Hx %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 F1 = hx*Z0*1e6
 titlestr = 'x-Component of Magnetic Field'
-cb_label = '$\\Re\\{Z_0H_x\\}$ [µV/m]'
+cb_label = '$\\Re\\{Z_0H_x\\}$ [µV/m]' 
 rel_color_range = 1/3
 fps = 10
 
