@@ -4,7 +4,7 @@
 
 import numpy as np
 import time
-from function_headers_fdtd import fdtd_1d, Fdtd1DAnimation
+from function_headers_fdtd import fdtd_1d_t, Fdtd1DAnimation
 from matplotlib import pyplot as plt
 
 # dark bluered colormap, registers automatically with matplotlib on import
@@ -56,15 +56,42 @@ for i in range(Nx):
         eps_rel[i] = n2**2
     else:
         eps_rel[i] = n1**2
-fdtd_1d(eps_rel, dx, time_span, source_frequency, source_position, source_pulse_length)
 
-# %% make video %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fps = 25
-step = t[-1]/fps/30
-ani = Fdtd1DAnimation(x, t, Ez, Hy, x_interface=x_interface,
-                       step=step, fps=fps)
+# time step
+conv_test_fac =np.linspace(0.5, 6.5, 13)
+dt = dx / (conv_test_fac * c)
+# error evaluation _energy
+error = np.zeros(len(dt))
+# operation time
+operation_time = np.zeros(len(dt))
+
+for i, dti in enumerate(dt):
+    Nt = int(round(time_span / dti)) + 1
+    t = np.linspace(0, time_span, Nt)
+    start = time.time()
+    Ez, Hy, x = fdtd_1d_t(eps_rel, dx, dti, Nt, source_frequency, source_position, source_pulse_length)
+    end = time.time()
+    operation_time[i] = end - start
+    error[i] = np.sum(Ez[-1, :]**2 + Hy[-1, :]**2)
+    print(f"dt = {dti:.2e}, runtime = {end-start:.2f} s")
+
+# rel_error = abs(error / error[-1] - 1)
+
+plt.figure()
+plt.plot(dt, operation_time, 'o-')
+plt.xlabel('time step dt [s]')
+plt.ylabel('operation time [s]')
+# plt.xscale('log')
+# plt.yscale('log')
+plt.grid()
 plt.show()
 
-# %% create representative figures of the results %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+plt.figure()
+plt.plot(dt, error, 'o-')
+plt.xlabel('time step dt [s]')
+plt.ylabel('relative error')
+# plt.xscale('log')
+# plt.yscale('log')
+plt.grid()
+plt.show()
 
-# please add your code here
