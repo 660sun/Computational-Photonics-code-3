@@ -56,7 +56,7 @@ midz = int(np.ceil((Nz-1)/2))
 
 # eps_rel = ...
 
-eps_rel = np.ones((Nx, Ny, Nz)) 
+eps_rel = np.ones((Nx, Ny, Nz))
 
 # %% current distributions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # jx = jy = np.zeros(...) 
@@ -69,7 +69,7 @@ eps_rel = np.ones((Nx, Ny, Nz))
 
 jx = np.zeros((Nx, Ny, Nz))
 jy = np.zeros((Nx, Ny, Nz))
-jz = np.zeros((Nx, Ny, Nz))
+jz = np.zeros((Nx, Ny, Nz)) 
 for i, xi in enumerate(x):
     for j, yj in enumerate(y):
         jz[i, j, :] = np.exp(-((xi)**2 + (yj)**2)/(source_width**2))
