@@ -248,6 +248,12 @@ def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
 
     F1 = []
     F2 = []
+    Ex = []
+    Ey = []
+    Ez = []
+    Hx = []
+    Hy = []
+    Hz = []
 
     # Main loop
     for n in range(0, Nt):
@@ -287,14 +293,48 @@ def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
         hz = hz - dt / mu0 * ((ex - np.roll(ex, -1, axis=1)) - (ey - np.roll(ey, -1, axis=0))) / dr
 
         # Save the field components for a specific z-plane index `z_ind`
-        F1.append(hx[:, :, z_ind])
-        F2.append(ez[:, :, z_ind])
+        # F1.append(hx[:, :, z_ind])
+        # F2.append(ez[:, :, z_ind])
 
+        # Save the field components at a specific time
+        Ex.append(ex)
+        Ey.append(ey)
+        Ez.append(ez)
+        Hx.append(hx)
+        Hy.append(hy)
+        Hz.append(hz)
 
+    
+    # F1 = np.array(F1)
+    # F2 = np.array(F2)
+    Ex = np.array(Ex)
+    Ey = np.array(Ey)
+    Ez = np.array(Ez)
+    Hx = np.array(Hx)
+    Hy = np.array(Hy)
+    Hz = np.array(Hz)
+
+    # Postprocessing - interpolation of output
+    Ex = 0.5 * (Ex + np.roll(Ex, 1, axis=1))
+
+    Ey = 0.5 * (Ey + np.roll(Ey, 1, axis=2))
+    
+    Ez = 0.5 * (Ez + np.roll(Ez, 1, axis=3))
+
+    Hx = 0.125 * (Hx + np.roll(Hx, 1, axis=2) + Hx + np.roll(Hx, 1, axis=3) + np.roll(np.roll(Hx, 1, axis=2), 1, axis=3) + np.roll((Hx + np.roll(Hx, 1, axis=2) + Hx + np.roll(Hx, 1, axis=3) + np.roll(np.roll(Hx, 1, axis=2), 1, axis=3)), 1, axis=0))
+        
+    Hy = 0.125 * (Hy + np.roll(Hy, 1, axis=1) + Hy + np.roll(Hy, 1, axis=3) + np.roll(np.roll(Hy, 1, axis=1), 1, axis=3) + np.roll((Hy + np.roll(Hy, 1, axis=1) + Hy + np.roll(Hy, 1, axis=3) + np.roll(np.roll(Hy, 1, axis=1), 1, axis=3)), 1, axis=0))
+        
+    Hz = 0.125 * (Hz + np.roll(Hz, 1, axis=1) + Hz + np.roll(Hz, 1, axis=2) + np.roll(np.roll(Hz, 1, axis=1), 1, axis=2) + np.roll((Hz + np.roll(Hz, 1, axis=1) + Hz + np.roll(Hz, 1, axis=2) + np.roll(np.roll(Hz, 1, axis=1), 1, axis=2)), 1, axis=0))
+
+    F1 = np.zeros((len(t), eps_rel.shape[0], eps_rel.shape[1]))
+    F2 = np.zeros((len(t), eps_rel.shape[0], eps_rel.shape[1]))
     if field_component == 'hx' or 'ez':
             
-            F1 = np.array(F1)
-            F2 = np.array(F2)
+            for n in range(0, len(t)):
+                F1[n, :, :] = Hx[n, :, :, z_ind]
+                F2[n, :, :] = Ez[n, :, :, z_ind]
+
             F1 = F1[::output_step, :, :]
             F2 = F2[::output_step, :, :]
 
