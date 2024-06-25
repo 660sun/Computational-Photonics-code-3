@@ -116,48 +116,6 @@ def fdtd_1d_t(eps_rel, dx, dt, Nt, source_frequency, source_position, source_pul
     return Ez, Hy, x
 
 
-def fdtd_1d_x(eps_rel, dx, time_span, source_frequency, source_position, source_pulse_length):
-
-    # basic parameters
-    c = 2.99792458e8 # speed of light [m/s]
-    mu0 = 4*np.pi*1e-7 # vacuum permeability [Vs/(Am)]
-    eps0 = 1/(mu0*c**2) # vacuum permittivity [As/(Vm)]
-    Z0 = np.sqrt(mu0/eps0) # vacuum impedance [Ohm]
-
-    # time step
-    dt = dx / (2 * c)
-    Nt = int(round(time_span / dt)) + 1
-    t = np.linspace(0, time_span, Nt)
-
-    # construction of matrices
-    Ez = np.zeros((Nt, len(eps_rel)))
-    Hy = np.zeros((Nt, len(eps_rel)))
-    jz = np.zeros((Nt, len(eps_rel) - 1))
-
-    # spatial coordinates of the fields
-    x = np.linspace(-(len(eps_rel) - 1)/2*dx, (len(eps_rel) - 1)/2*dx, len(eps_rel))
-
-    # source matrix
-    for n in range(Nt):
-        jz[n, source_position] = np.exp(-(((n + 0.5)*dt - 3*source_pulse_length)/source_pulse_length)**2) * np.cos(2*np.pi*source_frequency * (n + 0.5)*dt)
-    
-    # main loop
-    for n in range(1, Nt):
-        for i in range(1, len(eps_rel) - 1):
-            Ez[n, i] = Ez[n-1, i] + (Hy[n-1, i] - Hy[n-1, i-1]) * 1 / ( eps0 * eps_rel[i] ) * dt / dx - jz[n-1, i] * dt / ( eps0 * eps_rel[i] )
-        for i in range(len(eps_rel) - 1):
-            Hy[n, i] = Hy[n-1, i] + (Ez[n, i+1] - Ez[n, i]) * 1 / mu0 * dt / dx
-
-    # postprocessing - interpolation of output
-    for n in range(1, len(Ez)):
-        Hy[n, 0] = 0.5 * (Hy[n, 0] + Hy[n-1, 0])
-        Hy[n, -1] = 0.5 * (Hy[n, -2] + Hy[n-1, -2])
-        for i in range(1, len(eps_rel)-1):
-            Hy[n, i] = 0.25 * (Hy[n, i] + Hy[n, i-1] + Hy[n-1, i] + Hy[n-1, i-1])
-
-    return Ez, Hy, x, t
-
-
 def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
             field_component, z_ind, output_step):
     '''Computes the temporal evolution of a pulsed spatially extended current source using the 3D FDTD method. Returns z-slices of the selected field at the given z-position every output_step time steps. The pulse is centered at a simulation time of 3*tau. All quantities have to be specified in SI units.

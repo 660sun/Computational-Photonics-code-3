@@ -36,10 +36,10 @@ n2 = 2 # refractive index behind interface
 x_interface = x_span/4 #postion of dielectric interface
 
 # simulation parameters
-dx = 15e-9 # grid spacing [m]
+dx = np.linspace(5e-9, 25e-9, 5) # grid spacing [m]
 time_span = 60e-15 # duration of simulation [s]
 
-Nx = int(round(x_span/dx)) + 1 # number of grid points
+ # number of grid points
 
 # source parameters
 source_frequency = 500e12 # [Hz]
@@ -48,23 +48,40 @@ source_pulse_length = 1e-15 # [s]
 
 # %% create permittivity distribution and run simulation %%%%%%%%%%%%%%%%%%%%%%
 
-# please add your code here
-x = np.linspace(-x_span/2, x_span/2, Nx)
-eps_rel = np.ones(Nx)
-for i in range(Nx):
-    if x[i] > x_interface:
-        eps_rel[i] = n2**2
-    else:
-        eps_rel[i] = n1**2
-fdtd_1d(eps_rel, dx, time_span, source_frequency, source_position, source_pulse_length)
+oper_time = np.zeros(len(dx))
+error = np.zeros(len(dx))
+rel_error = np.zeros(len(dx))
 
-# %% make video %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fps = 25
-step = t[-1]/fps/30
-ani = Fdtd1DAnimation(x, t, Ez, Hy, x_interface=x_interface,
-                       step=step, fps=fps)
+# please add your code here
+for i, dxi in enumerate(dx):
+    Nx = int(round(x_span/dxi)) + 1
+    start = time.time()
+    x = np.linspace(-x_span/2, x_span/2, Nx)
+    eps_rel = np.ones(Nx)
+    for j in range(Nx):
+        if x[j] > x_interface:
+            eps_rel[j] = n2**2
+        else:
+            eps_rel[j] = n1**2
+    Ez, Hy, x, t = fdtd_1d(eps_rel, dxi, time_span, source_frequency, source_position, source_pulse_length)
+    end = time.time()
+    oper_time[i] = end-start
+    error[i] = np.sum(Ez[-1, :]**2)
+    print(f'Elapsed time for Nx = {Nx}: {end-start:.2f} s')
+
+for i in range(len(dx)):
+    rel_error[i] = (error[i] - error[0])/error[0]
+
+plt.figure()
+plt.plot(dx, oper_time, 'o-')
+plt.xlabel('Number of grid points')
+plt.ylabel('Operation time [s]')
+plt.grid(True)
 plt.show()
 
-# %% create representative figures of the results %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-# please add your code here
+plt.figure()
+plt.plot(dx, rel_error, 'o-')
+plt.xlabel('Number of grid points')
+plt.ylabel('Relative error')
+plt.grid(True)
+plt.show()

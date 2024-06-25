@@ -4,7 +4,7 @@
 
 import numpy as np
 import time
-from function_headers_fdtd import fdtd_1d_t, Fdtd1DAnimation
+from function_headers_fdtd import fdtd_1d_t
 from matplotlib import pyplot as plt
 
 # dark bluered colormap, registers automatically with matplotlib on import
@@ -57,41 +57,51 @@ for i in range(Nx):
     else:
         eps_rel[i] = n1**2
 
-# time step
-conv_test_fac =np.linspace(0.5, 6.5, 13)
-dt = dx / (conv_test_fac * c)
-# error evaluation _energy
-error = np.zeros(len(dt))
-# operation time
-operation_time = np.zeros(len(dt))
+# Reference time step
+dt_ref = dx / (20 * c)  # Fine time step for reference solution
+Nt_ref = int(round(time_span / dt_ref)) + 1
 
-for i, dti in enumerate(dt):
-    Nt = int(round(time_span / dti)) + 1
-    t = np.linspace(0, time_span, Nt)
+# Run reference simulation
+Ez_ref, Hy_ref, x = fdtd_1d_t(eps_rel, dx, dt_ref, Nt_ref, source_frequency, source_position, source_pulse_length)
+
+# Define time steps for convergence test
+conv_test_fac = np.linspace(2, 12, 11)
+dt_values = dx / (conv_test_fac * c)
+
+# Error evaluation and operation time
+errors = np.zeros(len(dt_values))
+operation_time = np.zeros(len(dt_values))
+
+for i, dti in enumerate(dt_values):
     start = time.time()
+    Nt = int(round(time_span / dti)) + 1
     Ez, Hy, x = fdtd_1d_t(eps_rel, dx, dti, Nt, source_frequency, source_position, source_pulse_length)
     end = time.time()
     operation_time[i] = end - start
-    error[i] = np.sum(Ez[-1, :]**2 + Hy[-1, :]**2)
-    print(f"dt = {dti:.2e}, runtime = {end-start:.2f} s")
+    
+    # Interpolate Ez to match the reference grid
+    Ez_interp = np.interp(x, x, Ez[-1])
+    Ez_ref_interp = np.interp(x, x, Ez_ref[-1])
+    
+    # Compute L2 norm of the error
+    errors[i] = np.linalg.norm(Ez_interp - Ez_ref_interp) / np.linalg.norm(Ez_ref_interp)
+    print(f"dt = {dti:.2e}, runtime = {end-start:.2f} s, L2 error = {errors[i]:.2e}")
 
-# rel_error = abs(error / error[-1] - 1)
-
+# Plot operation time vs. time step
 plt.figure()
-plt.plot(dt, operation_time, 'o-')
-plt.xlabel('time step dt [s]')
-plt.ylabel('operation time [s]')
-# plt.xscale('log')
-# plt.yscale('log')
+plt.plot(dt_values, operation_time, 'o-')
+plt.xlabel('Time step dt [s]')
+plt.ylabel('Operation time [s]')
 plt.grid()
+plt.title('Operation Time vs. Time Step')
 plt.show()
 
+# Plot L2 error norm vs. time step
 plt.figure()
-plt.plot(dt, error, 'o-')
-plt.xlabel('time step dt [s]')
-plt.ylabel('relative error')
-# plt.xscale('log')
-# plt.yscale('log')
+plt.plot(dt_values, errors, 'o-')
+plt.xlabel('Time step dt [s]')
+plt.ylabel('L2 Norm of Error')
+plt.yscale('log')  # Use logarithmic scale for better visualization
 plt.grid()
+plt.title('L2 Norm of Error vs. Time Step')
 plt.show()
-
