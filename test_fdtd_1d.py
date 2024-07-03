@@ -74,3 +74,33 @@ plt.show()
 
 # please add your code here
 
+# figures of magnetic field
+fig, axs = plt.subplots(2, 2, figsize=(10, 8))
+indices = [50, 550, 800, 1300]
+
+# Plot each index in a subplot
+for ax, idx in zip(axs.ravel(), indices):
+    ax.plot(x * 1e6, Z0*Hy[idx] * 1e6, color = 'orange')
+    ax.vlines(x_interface * 1e6, ymin=-5, ymax=5, ls='--', color='k')
+    ax.set_xlim(x[[0,-1]]*1e6)
+    ax.set_xlabel('$x$ [µm]')
+    ax.set_ylabel('$\\Re\\{H_y\\}$ [µV/m]')
+    ax.set_title(f'Magnetic field at $ct = {c*t[idx]*1e6:.2f}$µm, i={idx}')
+plt.tight_layout()
+plt.show()
+
+# figures of electric field
+fig, axs = plt.subplots(2, 2, figsize=(10, 8))
+indices = [50, 550, 800, 1300]
+
+# Plot each index in a subplot
+for ax, idx in zip(axs.ravel(), indices):
+    ax.plot(x * 1e6, Ez[idx] * 1e6)
+    ax.vlines(x_interface * 1e6, ymin=-5, ymax=5, ls='--', color='k')
+    ax.set_xlim(x[[0,-1]]*1e6)
+    ax.set_xlabel('$x$ [µm]')
+    ax.set_ylabel('$\\Re\\{E_z\\}$ [µV/m]')
+    ax.set_title(f'Electric field at $ct = {c*t[idx]*1e6:.2f}$µm, i={idx}')
+plt.tight_layout()
+plt.show()
+
