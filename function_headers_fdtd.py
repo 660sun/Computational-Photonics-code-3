@@ -98,7 +98,7 @@ def fdtd_1d_t(eps_rel, dx, dt, Nt, source_frequency, source_position, source_pul
     # source matrix
     for n in range(Nt):
         jz[n, source_position] = np.exp(-(((n + 0.5)*dt - 3*source_pulse_length)/source_pulse_length)**2) * np.cos(2*np.pi*source_frequency * (n + 0.5)*dt)
-    
+
     # main loop
     for n in range(1, Nt):
         for i in range(1, len(eps_rel) - 1):
@@ -159,120 +159,7 @@ def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
     dt = dr / (2 * c)
     Nt = int(round(time_span / dt)) + 1
     t = np.linspace(0, time_span, Nt)
-
-
-    # # construction of matrices
-    # ex = np.zeros((len(t), eps_rel.shape[0], eps_rel.shape[1], eps_rel.shape[2]))
-    # ey = np.zeros((len(t), eps_rel.shape[0], eps_rel.shape[1], eps_rel.shape[2]))
-    # ez = np.zeros((len(t), eps_rel.shape[0], eps_rel.shape[1], eps_rel.shape[2]))
-    # hx = np.zeros((len(t), eps_rel.shape[0], eps_rel.shape[1], eps_rel.shape[2]))
-    # hy = np.zeros((len(t), eps_rel.shape[0], eps_rel.shape[1], eps_rel.shape[2]))
-    # hz = np.zeros((len(t), eps_rel.shape[0], eps_rel.shape[1], eps_rel.shape[2]))
-
-    # # main loop
-    # for n in range(0, Nt - 1):
-    #     # add perfect electric conductor boundary conditions
-    #     ex[n, :, 0, :] = 0
-    #     ex[n, :, -1, :] = 0
-    #     ex[n, :, :, 0] = 0
-    #     ex[n, :, :, -1] = 0
-    #     ey[n, 0, :, :] = 0
-    #     ey[n, -1, :, :] = 0
-    #     ey[n, :, :, 0] = 0
-    #     ey[n, :, :, -1] = 0
-    #     ez[n, 0, :, :] = 0
-    #     ez[n, -1, :, :] = 0
-    #     ez[n, :, 0, :] = 0
-    #     ez[n, :, -1, :] = 0 
-    #     hx[n, 0, :, :] = 0
-    #     hx[n, -1, :, :] = 0
-    #     hy[n, :, 0, :] = 0
-    #     hy[n, :, -1, :] = 0
-    #     hz[n, :, :, 0] = 0
-    #     hz[n, :, :, -1] = 0
-
-    #     # update electric fields
-    #     for i in range(0, eps_rel.shape[0]):
-    #         for j in range(0, eps_rel.shape[1]):
-    #             for k in range(0, eps_rel.shape[2]):
-    #                 if j == 0 or k == 0:
-    #                     ex[n + 1, i, j, k] = 0
-    #                 elif j == eps_rel.shape[1] - 1 or k == eps_rel.shape[2] - 1:
-    #                     ex[n + 1, i, j, k] = 0
-    #                 else:
-    #                     ex[n + 1, i, j, k] = ex[n, i, j, k] + (((hz[n, i, j, k] - hz[n, i, j-1, k])) - (hy[n, i, j, k] - hy[n, i, j, k-1])) * 1 / ( eps0 * eps_rel[i, j, k] ) * dt / dr - jx[i, j, k] * np.cos(2 * np.pi * freq * (n + 0.5) * dt) * np.exp( - (((n + 0.5)* dt - 3 * tau) /(tau))**2) * dt / ( eps0 * eps_rel[i, j, k] )
-
-    #     for i in range(0, eps_rel.shape[0]):
-    #         for j in range(0, eps_rel.shape[1]):
-    #             for k in range(0, eps_rel.shape[2]):
-    #                 if i == 0 or k == 0:
-    #                     ey[n + 1, i, j, k] = 0
-    #                 elif i == eps_rel.shape[0] - 1 or k == eps_rel.shape[2] - 1:
-    #                     ey[n + 1, i, j, k] = 0
-    #                 else:
-    #                     ey[n + 1, i, j, k] = ey[n, i, j, k] + ((hx[n, i, j, k] - hx[n, i, j, k-1]) - (hz[n, i, j, k] - hz[n, i-1, j, k])) * 1 / ( eps0 * eps_rel[i, j, k] ) * dt / dr - jy[i, j, k] * np.cos(2 * np.pi * freq * (n + 0.5) * dt) * np.exp( - (((n + 0.5)* dt - 3 * tau) /(tau))**2) * dt / ( eps0 * eps_rel[i, j, k] )
-
-    #     for i in range(0, eps_rel.shape[0]):
-    #         for j in range(0, eps_rel.shape[1]):
-    #             for k in range(0, eps_rel.shape[2]):
-    #                 if j == 0 or i == 0:
-    #                     ez[n + 1, i, j, k] = 0
-    #                 elif j == eps_rel.shape[1] - 1 or i == eps_rel.shape[0] - 1:
-    #                     ez[n + 1, i, j, k] = 0
-    #                 else:
-    #                     ez[n + 1, i, j, k] = ez[n, i, j, k] + ((hy[n, i, j, k] - hy[n, i-1, j, k]) - (hx[n, i, j, k] - hy[n, i, j-1, k])) * 1 / ( eps0 * eps_rel[i, j, k] ) * dt / dr - jz[i, j, k] * np.cos(2 * np.pi * freq * (n + 0.5) * dt) * np.exp( - (((n + 0.5)* dt - 3 * tau) /(tau))**2) * dt / ( eps0 * eps_rel[i, j, k] )
-
-
-    #     # update magnetic fields
-    #     for i in range(0, eps_rel.shape[0]):
-    #         for j in range(0, eps_rel.shape[1]):
-    #             for k in range(0, eps_rel.shape[2]):
-    #                 if i == 0 or i == eps_rel.shape[0] - 1:
-    #                     hx[n + 1, i, j, k] = 0
-    #                 elif j == eps_rel.shape[1] - 1 and k == eps_rel.shape[2] - 1:
-    #                     hx[n + 1, i, j, k] = 0
-    #                 elif j == eps_rel.shape[1] - 1:
-    #                     hx[n + 1, i, j, k] = hx[n, i, j, k] + ((ey[n + 1, i, j, k+1] - ey[n + 1, i, j, k])) * 1 / mu0 * dt / dr
-    #                 elif k == eps_rel.shape[2] - 1:
-    #                     hx[n + 1, i, j, k] = hx[n, i, j, k] + (- (ez[n + 1, i, j+1, k] - ez[n + 1, i, j, k])) * 1 / mu0 * dt / dr
-    #                 else:
-    #                     hx[n + 1, i, j, k] = hx[n, i, j, k] + ((ey[n + 1, i, j, k+1] - ey[n + 1, i, j, k]) - (ez[n + 1, i, j+1, k] - ez[n + 1, i, j, k])) * 1 / mu0 * dt / dr
-            
-    #     for i in range(0, eps_rel.shape[0]):
-    #         for j in range(0, eps_rel.shape[1]):
-    #             for k in range(0, eps_rel.shape[2]):
-    #                 if j == 0 or j == eps_rel.shape[1] - 1:
-    #                     hy[n + 1, i, j, k] = 0
-    #                 elif i == eps_rel.shape[0] - 1 and k == eps_rel.shape[2] - 1:
-    #                     hy[n + 1, i, j, k] = 0
-    #                 elif i == eps_rel.shape[0] - 1:
-    #                     hy[n + 1, i, j, k] = hy[n, i, j, k] + ( - (ex[n + 1, i, j, k + 1] - ex[n + 1, i, j, k])) * 1 / mu0 * dt / dr
-    #                 elif k == eps_rel.shape[2] - 1:
-    #                     hy[n + 1, i, j, k] = hy[n, i, j, k] + ((ez[n + 1, i+1, j, k] - ez[n + 1, i, j, k])) * 1 / mu0 * dt / dr
-                    
-    #                 else:
-    #                     hy[n + 1, i, j, k] = hy[n, i, j, k] + ((ez[n + 1, i+1, j, k] - ez[n + 1, i, j, k]) - (ex[n + 1, i, j, k+1] - ex[n + 1, i, j, k])) * 1 / mu0 * dt / dr
-        
-    #     for i in range(0, eps_rel.shape[0]):
-    #         for j in range(0, eps_rel.shape[1]):
-    #             for k in range(0, eps_rel.shape[2]):
-    #                 if k == 0 or k == eps_rel.shape[2] - 1:
-    #                     hz[n + 1, i, j, k] = 0
-    #                 elif j == eps_rel.shape[1] - 1 and i == eps_rel.shape[0] - 1:
-    #                     hz[n + 1, i, j, k] = 0
-    #                 elif j == eps_rel.shape[1] - 1:
-    #                     hz[n + 1, i, j, k] = hz[n, i, j, k] + (- (ey[n + 1, i + 1, j, k] - ex[n + 1, i, j, k])) * 1 / mu0 * dt / dr
-    #                 elif i == eps_rel.shape[0] - 1:
-    #                     hz[n + 1, i, j, k] = hz[n, i, j, k] + ((ex[n + 1, i, j+1, k] - ey[n + 1, i, j, k])) * 1 / mu0 * dt / dr
-    #                 else:
-    #                     hz[n + 1, i, j, k] = hz[n, i, j, k] + ((ex[n + 1, i, j+1, k] - ex[n + 1, i, j, k]) - (ey[n + 1, i+1, j, k] - ey[n + 1, i, j, k])) * 1 / mu0 * dt / dr
-    
-    # # save the field components for a specific z-plane index `z_ind`
-    # if field_component == 'hx' or 'ez':
-    #     F2 = ez[::output_step, :, :, z_ind]
-    #     F1 = hx[::output_step, :, :, z_ind]
-    
-    
+       
     # construction of matrices
     ex = np.zeros((eps_rel.shape[0], eps_rel.shape[1], eps_rel.shape[2]))
     ey = np.zeros((eps_rel.shape[0], eps_rel.shape[1], eps_rel.shape[2]))
